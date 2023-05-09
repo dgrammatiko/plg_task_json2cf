@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="task" method="upgrade">
+	<name>plg_task_json2cf</name>
+  <author>Dimitrios Grammatikogiannis</author>
+  <creationDate>2023-05</creationDate>
+  <copyright>(C) 2023 Dimitrios Grammatikogiannis</copyright>
+  <license>GNU General Public License version 3 or later</license>
+  <authorEmail>d.grammatiko@gmail.com</authorEmail>
+  <authorUrl>https://dgrammatiko.dev</authorUrl>
+  <version>0.0.1</version>
+  <description>Some description</description>
+	<namespace path="src">Dgrammatiko\Plugin\Task\Json2cf</namespace>
+	<files>
+    <folder plugin="json2cf">services</folder>
+    <folder>src</folder>
+    <folder>forms</folder>
+    <folder>jsons</folder>
+    <folder>language</folder>
+	</files>
+</extension>
