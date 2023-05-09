@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<form>
-  <fields name="params">
-    <fieldset name="task_params">
-      <field name="categories" type="category" multiple="true" extension="com_content" label="PLG_TASK_JSON2CF_CATEGORIES" description="PLG_TASK_JSON2CF_CATEGORIES_DESC" layout="joomla.form.field.list-fancy-select" />
-    </fieldset>
-  </fields>
-</form>

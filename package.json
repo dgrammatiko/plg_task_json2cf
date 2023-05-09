@@ -1,0 +1,64 @@
+{
+  "name": "rename-me",
+  "version": "0.0.1",
+  "scripts": {
+    "get-joomla": "node joomla-tools.mjs -i",
+    "link": "joomla-tools -l",
+    "build": "joomla-tools -b media_source",
+    "release": "joomla-tools -r",
+    "init": "joomla-tools -i && joomla-tools -l && joomla-tools -b media_source",
+    "lint-css": "npx stylelint media_src/css/.",
+    "lint-js": "npx eslint media_src/js/.",
+    "lint": "npm run lint-css && npm run lint-js",
+    "update:browserlist": "npx browserslist@latest --update-db"
+  },
+  "devDependencies": {
+    "@dgrammatiko/joomla-tools": "0.0.1-alpha.3",
+    "eslint": "8.40.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-plugin-import": "2.27.5",
+    "eslint-plugin-vue": "9.11.0",
+    "stylelint": "15.6.1",
+    "stylelint-config-standard": "33.0.0",
+    "stylelint-order": "6.0.3",
+    "stylelint-scss": "5.0.0"
+  },
+  "joomla-extensions": {
+    "components": [],
+    "libraries": [],
+    "modules": {
+      "administrator": [],
+      "site": []
+    },
+    "plugins": {
+      "actionlog": [],
+      "api-authentication": [],
+      "authentication": [],
+      "behaviour": [],
+      "captcha": [],
+      "content": [],
+      "editors": [],
+      "editors-xtd": [],
+      "extension": [],
+      "fields": [],
+      "filesystem": [],
+      "finder": [],
+      "installer": [],
+      "media-action": [],
+      "multifactorauth": [],
+      "privacy": [],
+      "quickicon": [],
+      "sampledata": [],
+      "system": [],
+      "task": [],
+      "user": [],
+      "webservices": [],
+      "workflow": []
+    },
+    "templates": {
+      "administrator": [],
+      "site": []
+    }
+  },
+  "joomlaVersion": "4.3.0"
+}

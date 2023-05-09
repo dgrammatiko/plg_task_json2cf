@@ -1,0 +1,32 @@
+[
+  {
+    "fieldName": "lastupdate",
+    "external": "lastUpdate",
+    "as": "string"
+  },
+  {
+    "fieldName": "streetfr",
+    "external": "address.streetFr",
+    "as": "string"
+  },
+  {
+    "fieldName": "streetnl",
+    "external": "address.streetNl",
+    "as": "string"
+  },
+  {
+    "fieldName": "emailfr",
+    "external": "emailFr",
+    "as": "array.emails"
+  },
+  {
+    "fieldName": "coordinates",
+    "external": "address.lat",
+    "as": "float",
+    "add": {
+      "join": ",",
+      "postpend": "address.lon",
+      "as": "float"
+    }
+  }
+]

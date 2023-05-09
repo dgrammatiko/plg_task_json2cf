@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<form>
+  <fields name="params">
+    <fieldset name="task_params">
+      <field name="baseURL" type="text" multiple="false" label="PLG_TASK_JSON2CF_BASEURL" description="PLG_TASK_JSON2CF_BASEURL_DESC"  default="https://social.brussels/rest/organisation/{{id}}"/>
+      <field name="categories" type="category" multiple="false" extension="com_content" label="PLG_TASK_JSON2CF_CATEGORIES" description="PLG_TASK_JSON2CF_CATEGORIES_DESC" />
+      <field name="profile" type="filelist" default="" label="Select a profile" description="" directory="plugins/task/json2cf/jsons" filter=".json" exclude="" stripext=".json" />
+    </fieldset>
+  </fields>
+</form>
