@@ -52,7 +52,7 @@
       "system": [],
       "task": [
         {
-          "name": "json2cf", "version": "0.0.1"
+          "name": "json2cf", "version": "0.0.2"
         }
       ],
       "user": [],

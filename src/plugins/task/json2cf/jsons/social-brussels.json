@@ -15,7 +15,7 @@
     "as": "string"
   },
   {
-    "fieldName": "emailfr",
+    "fieldName": "emailFr",
     "external": "emailFr",
     "as": "array.emails"
   },

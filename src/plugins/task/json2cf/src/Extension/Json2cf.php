@@ -28,8 +28,8 @@ use Joomla\Registry\Registry;
  */
 final class Json2cf extends CMSPlugin implements SubscriberInterface
 {
-  use DatabaseAwareTrait;
   use TaskPluginTrait;
+  use DatabaseAwareTrait;
 
   protected $logger;
   protected const TASKS_MAP = [
@@ -49,6 +49,8 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
     ];
   }
 
+  protected $autoloadLanguage = true;
+
   public function doit(ExecuteTaskEvent $event): int
   {
     Log::addLogger(
@@ -60,7 +62,7 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
       [ 'msg-error' ]
     );
 
-    $params        = $event->getArgument('params');
+    $params = $event->getArgument('params');
 
     if (empty($params->baseURL)) return false;
     if (empty($params->profile)) return false;
@@ -93,11 +95,17 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
 
       $fieldsData               = [];
       $fieldsData['com_fields'] = [];
+      $fieldsIds                = [];
 
       // Get the fields
       if (!empty($relatedCustomFields)) {
           foreach ($relatedCustomFields as $field) {
               $fieldsData['com_fields'][$field->name] = $field->rawvalue;
+              if ($field->type === 'subform') {
+                $fieldsIds[$field->name] = (int) $field->fieldparams->get('options')->option0->customfield;
+              } else {
+                $fieldsIds[$field->name] = $field->id;
+              }
           }
       }
 
@@ -128,13 +136,13 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
         continue;
       }
 
-      $this->updateArticle($profile, $article, $data, $fieldsData);
+      $this->updateArticle($profile, $article, $data, $fieldsData, $fieldsIds);
     }
 
     return Status::OK;
   }
 
-  private function updateArticle($profile, $article, $fetchedData, $fieldsData): void
+  private function updateArticle($profile, $article, $fetchedData, $fieldsData, $fieldsIds): void
   {
     $hasChanges = false;
 
@@ -148,13 +156,25 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
       }
       if (!str_contains($rule->external, '.')) {
         if (isset($fetchedData[$rule->external]) && isset($fieldsData['com_fields'][$rule->fieldName])) {
-          if ($fieldsData['com_fields'][$rule->fieldName] !== $fetchedData[$rule->external]) {
+          if  ($fieldsData['com_fields'][$rule->fieldName] !== $fetchedData[$rule->external]) {
             $hasChanges = true;
-            $fieldsData['com_fields'][$rule->fieldName] = self::validate($fetchedData[$rule->external], $rule->as);
+            $fieldsData['com_fields'][$rule->fieldName] = self::validate($fetchedData[$rule->external], $rule->as, $fieldsIds[$rule->fieldName]);
           }
         }
       } else {
         // destruct the fieldname
+        $parts = explode('.', $rule->external);
+        if (count($parts) === 2) {
+          if ($fieldsData['com_fields'][$rule->fieldName] !== $fetchedData[$parts[0]][$parts[1]]) {
+            $hasChanges = true;
+            $fieldsData['com_fields'][$rule->fieldName] = self::validate($fetchedData[$parts[0]][$parts[1]], $rule->as, $fieldsIds[$rule->fieldName]);
+          }
+        } elseif (count($parts) === 3) {
+          if ($fieldsData['com_fields'][$rule->fieldName] !== $fetchedData[$parts[0]][$parts[1]][$parts[2]]) {
+            $hasChanges = true;
+            $fieldsData['com_fields'][$rule->fieldName] = self::validate($fetchedData[$parts[0]][$parts[1]][$parts[2]], $rule->as, $fieldsIds[$rule->fieldName]);
+          }
+        }
       }
     }
 
@@ -181,7 +201,7 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
     }
    }
 
-  private static function validate($value, $as): string
+  private static function validate($value, $as, $fieldId): string
   {
     switch ($as) {
     case 'date':
@@ -191,6 +211,9 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
     case 'float':
         return InputFilter::getInstance()->clean($value, 'float');
         break;
+    case 'array.emails':
+        return self::getRepeat($value, $fieldId);
+        break;
     }
 
     return InputFilter::getInstance()->clean($value, 'string');
@@ -199,12 +222,13 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
   // J3 had a Custom Field of Type REPEATABLE. J4 has a Custom Field of Type SUBFORM. In the database the content is a bit different:
   // J3 : {"emailfr-repeatable0":{"email":"test1@test.com"},"emailfr-repeatable1":{"email":"test2@test.com"}} where emailfr was the Name of the Custom Field
   // J4 : {"row0":{"field6":"mailto:test1@test.com"},"row1":{"field6":"mailto:test2@test.com"}} where field6 refers to the fact that we have selected the CF with ID 6
-  public function getRepeat(array $array, string $fieldId): string
+  public static function getRepeat(array $array, string $fieldId): string
   {
     $ix      = 0;
     $results = [];
 
     foreach ($array as $elem) {
+      $elem = InputFilter::getInstance()->clean($elem, 'string');
       $item                     = [];
       $item['field' . $fieldId] = "mailto:" . $elem;
       $results['row' . $ix]     = $item;
