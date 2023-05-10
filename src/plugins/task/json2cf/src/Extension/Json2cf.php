@@ -24,7 +24,7 @@ use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
 /**
- * Task plugin with routines to change the offline status of the site. These routines can be used to control planned
+ * Task plugin with routines to loop through Articles of a Category in order to update its Custom Fields based on values fetched from a external website through its API
  */
 final class Json2cf extends CMSPlugin implements SubscriberInterface
 {
@@ -56,7 +56,7 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
     Log::addLogger(
       [
         'format'    => '{DATE}\t{TIME}\t{LEVEL}\t{CODE}\t{MESSAGE}',
-        'text_file' => 'social-brussels-sync.php',
+        'text_file' => 'json2cf.php',
       ],
       Log::ALL,
       [ 'msg-error' ]
@@ -146,7 +146,7 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
   {
     $hasChanges = false;
 
-    // Get actuial article data
+    // Get actual Article data
     $existingData = $this->getApplication()->bootComponent('com_content')->getMVCFactory()->createTable('Article', 'Administrator', []);
     $existingData->load($article->id);
 
@@ -162,7 +162,7 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
           }
         }
       } else {
-        // destruct the fieldname
+        // Destruct the fieldname
         $parts = explode('.', $rule->external);
         if (count($parts) === 2) {
           if ($fieldsData['com_fields'][$rule->fieldName] !== $fetchedData[$parts[0]][$parts[1]]) {
@@ -182,21 +182,21 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
       // Set the modified date
       $existingData->modified = (new Date())->toSql();
 
-      // Set the tags to success
-      $existingData->newTags = [ 2 ];
+      // Set the Tags telling the Article has changes
+      $existingData->newTags = [ 2 ]; // all Tags will be replaced by a Tag having Title 2
 
-      // save the article
+      // Save the Article
       $existingData->store($existingData->id);
       (new TagsHelper)->postStoreProcess($existingData, $existingData->newTags, true);
 
-      // trigger an Event
+      // Trigger an Event
       $this->getApplication()->triggerEvent('onContentAfterSave', ['com_content.article', &$existingData, false, $fieldsData]);
     } else {
-      // change the tag if something else
-      // Set the tags to success
+      // Change the Tag if there was no change
       $existingData->newTags = [ 4 ];
+      
+      // Save the Article
       $existingData->store($existingData->id);
-
       (new TagsHelper)->postStoreProcess($existingData, $existingData->newTags, true);
     }
    }
@@ -212,17 +212,21 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
         return InputFilter::getInstance()->clean($value, 'float');
         break;
     case 'array.emails':
-        return self::getRepeat($value, $fieldId);
+        return self::getRepeat($value, $fieldId, 'mailto:'); // mailto: is required in a Custom Field of Type URL when you want to save an Email
         break;
+    case 'array.websites':
+      return self::getRepeat($value, $fieldId, ''); // https:// or http:// is already included in the external source
+      break;
     }
 
     return InputFilter::getInstance()->clean($value, 'string');
   }
 
   // J3 had a Custom Field of Type REPEATABLE. J4 has a Custom Field of Type SUBFORM. In the database the content is a bit different:
-  // J3 : {"emailfr-repeatable0":{"email":"test1@test.com"},"emailfr-repeatable1":{"email":"test2@test.com"}} where emailfr was the Name of the Custom Field
-  // J4 : {"row0":{"field6":"mailto:test1@test.com"},"row1":{"field6":"mailto:test2@test.com"}} where field6 refers to the fact that we have selected the CF with ID 6
-  public static function getRepeat(array $array, string $fieldId): string
+  // J3: {"emailfr-repeatable0":{"email":"test1@test.com"},"emailfr-repeatable1":{"email":"test2@test.com"}} where emailfr was the Name of the Custom Field
+  // J4: {"row0":{"field6":"mailto:test1@test.com"},"row1":{"field6":"mailto:test2@test.com"}} where field6 refers to the fact that we have selected the CF with ID 6
+  // The following function formats the CF of Type SUBFORM as expected by Joomla
+  public static function getRepeat(array $array, string $fieldId, string $protocol): string
   {
     $ix      = 0;
     $results = [];
@@ -230,7 +234,7 @@ final class Json2cf extends CMSPlugin implements SubscriberInterface
     foreach ($array as $elem) {
       $elem = InputFilter::getInstance()->clean($elem, 'string');
       $item                     = [];
-      $item['field' . $fieldId] = "mailto:" . $elem;
+      $item['field' . $fieldId] = $protocol . $elem;
       $results['row' . $ix]     = $item;
       ++$ix;
     }
